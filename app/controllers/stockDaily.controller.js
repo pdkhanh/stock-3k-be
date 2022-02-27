@@ -95,15 +95,17 @@ function saveStockPattern(data) {
     const stockDaily = new StockDaily({
         date: data.date,
         code: data.code,
+        name: data.name,
+        exchange: data.exchange,
         price: data.price,
         change: data.change,
         perChange: data.perChange,
         mTotalVol: data.mTotalVol,
-        ptTotalVol: data.ptTotalVol,
+        mTotalVal: data.mTotalVal,
         image: data.image,
         marketCap: data.marketCap,
-        daily: data.daily,
-        pattern: data.pattern
+        daily: data.daily
+        // pattern: data.pattern ? data.pattern : null
     });
     stockDaily
         .save(stockDaily)
@@ -140,13 +142,7 @@ async function getAndSaveStockData(stockList) {
     await Promise.all(stockList.map(async (e) => {
         try {
             let stockData = await vietstock.getStockData(e)
-            let item = {
-                code: stockData.code,
-                price: stockData.price,
-                change: stockData.change,
-                perChange: stockData.perChange
-            }
-            data.push(item)
+            data.push(stockData)
             saveStockPattern(stockData)
         } catch (err) {
             console.log(err)
@@ -161,10 +157,36 @@ function generateMessageMACD(data) {
     let stockData = ''
     let url = 'https://pdkhanh.github.io/stock-3k-fe/?date=' + today
     data.forEach(element => {
-        stockData += `${element.code} ${element.price} (${element.change} ${element.perChange}%)\n`
+        stockData += `${element.code} ${addDotToCurrency(element.price)} (${element.change} ${element.perChange}%) ${addLetterToCurrency(element.mTotalVal)}\n`
     });
     let message = `${today} found ${count} \n${stockData}${url}`
     return message
+}
+
+
+function addLetterToCurrency(labelValue) {
+    // Nine Zeroes for Billions
+    return Math.abs(Number(labelValue)) >= 1.0e+9
+        ? (Math.abs(Number(labelValue)) / 1.0e+9).toFixed(2) + "B"
+        // Six Zeroes for Millions 
+        : Math.abs(Number(labelValue)) >= 1.0e+6
+            ? (Math.abs(Number(labelValue)) / 1.0e+6).toFixed(2) + "M"
+            // Three Zeroes for Thousands
+            : Math.abs(Number(labelValue)) >= 1.0e+3
+                ? (Math.abs(Number(labelValue)) / 1.0e+3).toFixed(2) + "K"
+                : Math.abs(Number(labelValue));
+}
+
+function addDotToCurrency(nStr) {
+    nStr += '';
+    x = nStr.split('.');
+    x1 = x[0];
+    x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + '.' + '$2');
+    }
+    return x1 + x2;
 }
 
 // Find a single Tutorial with an id

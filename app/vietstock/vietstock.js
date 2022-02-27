@@ -1,5 +1,7 @@
 var request = require("request");
 var dateFormat = require('dateformat');
+var jsonpath = require('jsonpath');
+let stockList = require('../../stock-data.json');
 
 const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36',
@@ -56,7 +58,10 @@ function getStockDataByDate(stockID, from, to) {
 }
 
 function getData(body) {
+    let stockCode = body[0]['StockCode']
     try {
+        let stockOffflineData = jsonpath.query(stockList, `$..[?(@.code=="${stockCode}")]`)[0]
+        console.log(stockOffflineData.name)
         open = []
         close = []
         high = []
@@ -64,7 +69,6 @@ function getData(body) {
         daily = []
         var regExp = /\(([^)]+)\)/;
         body.forEach(element => {
-            stockCode = element['StockCode']
             let openPrice = element['OpenPrice']
             let closePrice = element['ClosePrice']
             let highstPrice = element['ClosePrice']
@@ -81,11 +85,14 @@ function getData(body) {
         });
         var data = {
             'code': stockCode,
+            'name': stockOffflineData.name,
+            'exchange': stockOffflineData.exchange,
             'date': today,
             'price': body[0].ClosePrice,
             'change': body[0].Change,
             'perChange': body[0].PerChange,
             'mTotalVol': body[0].MT_TotalVol,
+            'mTotalVal': body[0].MT_TotalVal,
             'marketCap': body[0].MarketCapital,
             'daily': daily
         }
@@ -99,7 +106,8 @@ function getData(body) {
         // }
         return data
     } catch (err) {
-        console.log(body)
+        // console.log(body)
+        console.log(err)
     }
 }
 
