@@ -10,7 +10,7 @@ const headers = {
 var today = dateFormat(new Date(), "yyyy-mm-dd");
 
 var dayMinus28 = new Date();
-dayMinus28.setDate(dayMinus28.getDate() - 120);
+dayMinus28.setDate(dayMinus28.getDate() - 200);
 dayMinus28 = dateFormat(dayMinus28, "yyyy-mm-dd");
 
 function getStockData(stockCode) {

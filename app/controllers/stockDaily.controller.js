@@ -159,7 +159,7 @@ function generateMessageMACD(data) {
     let today = dateFormat(new Date(), "yyyy-mm-dd");
     let count = data.length
     let stockData = ''
-    let url = 'https://pdkhanh.github.io/stock-3k-fe/'
+    let url = 'https://pdkhanh.github.io/stock-3k-fe/?date=' + today
     data.forEach(element => {
         stockData += `${element.code} ${element.price} (${element.change} ${element.perChange}%)\n`
     });
