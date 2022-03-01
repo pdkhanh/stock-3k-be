@@ -32,7 +32,6 @@ exports.findStock = async (req, res) => {
     let count = await loopList(stockList.data)
     var today = dateFormat(new Date(), "yyyy-mm-dd");
     let message = today + ' found: ' + count + '\nhttps://pdkhanh.github.io/stock-3k-fe/'
-    console.log(message)
     // telegram.sendMessage(message)
 };
 
@@ -128,16 +127,18 @@ exports.findAll = (req, res) => {
 };
 
 
-exports.findMACD = async (req, res) => {
-    let macdData = await fialda.getMACD()
-    let stockList = jsonpath.query(JSON.parse(macdData), '$.result')[0]
-    let result = await getAndSaveStockData(stockList)
+exports.findFialdaFilter = async (req, res) => {
+    let filterName = req.query.filterName
+    let filterResult = await fialda.getFilterResult(filterName)
+    let stockList = jsonpath.query(JSON.parse(filterResult), '$.result')[0]
+    let result = await getAndSaveStockDataSequence(stockList)
     res.send(result)
-    let message = generateMessageMACD(result)
+    let message = generateMessageMACD(filterName, result)
+    console.log(message)
     telegram.sendMessage(message)
 };
 
-async function getAndSaveStockData(stockList) {
+async function getAndSaveStockDataParallel(stockList) {
     let data = []
     await Promise.all(stockList.map(async (e) => {
         try {
@@ -151,7 +152,19 @@ async function getAndSaveStockData(stockList) {
     return data
 }
 
-function generateMessageMACD(data) {
+async function getAndSaveStockDataSequence(stockList) {
+    console.log(stockList)
+    let data = []
+    for (const stockName of stockList) {
+        console.log(stockName)
+        let stockData = await vietstock.getStockData(stockName)
+        data.push(stockData)
+        saveStockPattern(stockData)
+    }
+    return data
+}
+
+function generateMessageMACD(filterName, data) {
     let today = dateFormat(new Date(), "yyyy-mm-dd");
     let count = data.length
     let stockData = ''
@@ -159,7 +172,7 @@ function generateMessageMACD(data) {
     data.forEach(element => {
         stockData += `${element.code} ${addDotToCurrency(element.price)} (${element.change} ${element.perChange}%) ${addLetterToCurrency(element.mTotalVal)}\n`
     });
-    let message = `${today} found ${count} \n${stockData}${url}`
+    let message = `${filterName} - ${today} found ${count} \n${stockData}${url}`
     return message
 }
 

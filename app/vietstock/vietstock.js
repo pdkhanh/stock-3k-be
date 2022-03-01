@@ -30,6 +30,8 @@ function getStockData(stockCode) {
                 let resData = JSON.parse(response.body)
                 resolve(getData(resData.Data))
             } catch (err) {
+                console.log(stockCode)
+                console.log(response.body)
                 console.log(err)
             }
             if (error) reject(error)
@@ -61,7 +63,6 @@ function getData(body) {
     let stockCode = body[0]['StockCode']
     try {
         let stockOffflineData = jsonpath.query(stockList, `$..[?(@.code=="${stockCode}")]`)[0]
-        console.log(stockOffflineData.name)
         open = []
         close = []
         high = []
@@ -85,8 +86,8 @@ function getData(body) {
         });
         var data = {
             'code': stockCode,
-            'name': stockOffflineData.name,
-            'exchange': stockOffflineData.exchange,
+            'name': stockOffflineData == undefined ? '' : stockOffflineData.name,
+            'exchange': stockOffflineData == undefined ? '' : stockOffflineData.exchange,
             'date': today,
             'price': body[0].ClosePrice,
             'change': body[0].Change,
@@ -106,7 +107,7 @@ function getData(body) {
         // }
         return data
     } catch (err) {
-        // console.log(body)
+        console.log(stockCode)
         console.log(err)
     }
 }

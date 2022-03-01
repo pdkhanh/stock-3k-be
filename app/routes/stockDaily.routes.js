@@ -11,7 +11,7 @@ module.exports = app => {
   // Retrieve all Tutorials
   router.get("/", stockDaily.findAll);
 
-  router.get("/fialda", stockDaily.findMACD);
+  router.get("/fialda", stockDaily.findFialdaFilter);
 
   // // Retrieve all published Tutorials
   // router.get("/published", tutorials.findAllPublished);
