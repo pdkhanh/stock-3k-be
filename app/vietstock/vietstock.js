@@ -33,6 +33,7 @@ function getStockData(stockCode) {
                 console.log(err)
                 console.log(stockCode)
                 console.log(response.body)
+                resolve(null)
             }
             if (error) reject(error)
         })

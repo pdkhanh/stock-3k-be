@@ -1,24 +1,21 @@
 const db = require("../models");
 const vietstock = require("../vietstock/vietstock.js")
-var dateFormat = require('dateformat');
 const Treasure = db.Treasure;
-var jsonpath = require('jsonpath');
 
 exports.create = async (req, res) => {
     let body = req.body
     let data = await initTreasureData(body)
     const treasure = new Treasure(data);
-
-    treasure
-        .save(treasure)
-        .then(data => {
-            res.send(data);
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: err.message || "Some error occurred while creating the Tutorial."
-            });
-        });
+    if (data.message) {
+        res.send(data)
+        return
+    }
+    treasure.save(treasure).then(data => {
+        res.send(data)
+    }).catch(err => {
+        if (err.code == 11000) res.send({ message: err.keyValue.code + ' already existed' })
+    })
+    // 
 };
 
 exports.getAll = async (req, res) => {
@@ -48,18 +45,22 @@ exports.update = async (req, res) => {
 };
 
 async function initTreasureData(initData) {
-    let vietstockData = await vietstock.getStockData(initData.code)
-    let data = {
-        code: initData.code,
-        addedDate: initData.addedDate,
-        initPrice: initData.initPrice == 0 ? vietstockData.price : initData.initPrice,
-        change: 0,
-        perChange: 0,
-        currentPrice: vietstockData.price,
-        currentChange: vietstockData.change,
-        currentPerChange: vietstockData.perChange
+    try {
+        let vietstockData = await vietstock.getStockData(initData.code)
+        let data = {
+            code: initData.code,
+            addedDate: initData.addedDate,
+            initPrice: initData.initPrice == 0 ? vietstockData.price : initData.initPrice,
+            change: 0,
+            perChange: 0,
+            currentPrice: vietstockData.price,
+            currentChange: vietstockData.change,
+            currentPerChange: vietstockData.perChange
+        }
+        return data
+    } catch (err) {
+        return { message: `${initData.code} not found` }
     }
-    return data
 }
 
 async function calculateStockData(data) {
