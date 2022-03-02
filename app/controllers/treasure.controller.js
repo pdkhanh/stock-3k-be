@@ -44,7 +44,7 @@ exports.update = async (req, res) => {
         { initPrice: newPrice }, function (err) {
             if (err) res.send(err)
         });
-    res.send(req)
+    res.send('OK')
 };
 
 async function initTreasureData(initData) {
@@ -54,7 +54,7 @@ async function initTreasureData(initData) {
         addedDate: initData.addedDate,
         initPrice: initData.initPrice == 0 ? vietstockData.price : initData.initPrice,
         change: 0,
-        perchange: 0,
+        perChange: 0,
         currentPrice: vietstockData.price,
         currentChange: vietstockData.change,
         currentPerChange: vietstockData.perChange
@@ -67,7 +67,7 @@ async function calculateStockData(data) {
     let change = vietstockData.price - data.initPrice
     let perChange = change * 100 / data.initPrice
     data.change = change
-    data.perChange = perChange.toFixed(2)
+    data.perChange = change == 0 ? 0 : perChange.toFixed(2)
     console.log(data)
     return data
 }
