@@ -30,7 +30,7 @@ exports.getAll = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-    let stockCode = req.body
+    let stockCode = req.body.code
     Treasure.deleteOne({ code: stockCode }, function (err) {
         if (err) res.send(err)
     });
