@@ -7,5 +7,6 @@ const db = {};
 db.mongoose = mongoose;
 db.url = dbConfig.url;
 db.StockDaily = require("./stockDaily.model.js")(mongoose);
+db.Treasure = require("./treasure.model.js")(mongoose);
 
 module.exports = db;

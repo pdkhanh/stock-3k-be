@@ -30,29 +30,9 @@ function getStockData(stockCode) {
                 let resData = JSON.parse(response.body)
                 resolve(getData(resData.Data))
             } catch (err) {
+                console.log(err)
                 console.log(stockCode)
                 console.log(response.body)
-                console.log(err)
-            }
-            if (error) reject(error)
-        })
-    });
-}
-
-function getStockDataByDate(stockID, from, to) {
-    return new Promise(function (resolve, reject) {
-        URL = `https://finance.vietstock.vn/data/KQGDThongKeGiaStockPaging?page=1&pageSize=20&catID=1&stockID=${stockID}&fromDate=${from}&toDate=${to}`;
-        console.log(URL)
-        request({
-            url: URL,
-            method: "GET",
-            headers: headers,
-            json: true,
-        }, function (error, response, body) {
-            try {
-                resolve(getData(response.body[1]))
-            } catch (err) {
-                console.log(err)
             }
             if (error) reject(error)
         })
@@ -114,5 +94,3 @@ function getData(body) {
 
 exports.getData = getData;
 exports.getStockData = getStockData;
-exports.getStockDataByDate = getStockDataByDate;
-

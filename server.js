@@ -35,6 +35,7 @@ app.get("/", (req, res) => {
 });
 
 require("./app/routes/stockDaily.routes")(app);
+require("./app/routes/treasure.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
