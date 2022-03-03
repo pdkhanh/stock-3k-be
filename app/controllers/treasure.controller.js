@@ -69,6 +69,9 @@ async function calculateStockData(data) {
     let perChange = change * 100 / data.initPrice
     data.change = change
     data.perChange = change == 0 ? 0 : perChange.toFixed(2)
+    data.price = vietstockData.price
+    data.currentChange = vietstockData.change
+    data.currentPerChange = vietstockData.perChange
     console.log(data)
     return data
 }
