@@ -91,21 +91,7 @@ async function findPattern(stockId) {
 }
 
 function saveStockPattern(data) {
-    const stockDaily = new StockDaily({
-        date: data.date,
-        code: data.code,
-        name: data.name,
-        exchange: data.exchange,
-        price: data.price,
-        change: data.change,
-        perChange: data.perChange,
-        mTotalVol: data.mTotalVol,
-        mTotalVal: data.mTotalVal,
-        image: data.image,
-        marketCap: data.marketCap,
-        daily: data.daily
-        // pattern: data.pattern ? data.pattern : null
-    });
+    const stockDaily = new StockDaily(data);
     stockDaily
         .save(stockDaily)
 }
@@ -131,7 +117,7 @@ exports.findFialdaFilter = async (req, res) => {
     let filterName = req.query.filterName
     let filterResult = await fialda.getFilterResult(filterName)
     let stockList = jsonpath.query(JSON.parse(filterResult), '$.result')[0]
-    let result = await getAndSaveStockDataSequence(stockList)
+    let result = await getAndSaveStockDataSequence(filterName, stockList)
     res.send(result)
     let message = generateMessageMACD(filterName, result)
     console.log(message)
@@ -143,8 +129,9 @@ async function getAndSaveStockDataParallel(stockList) {
     await Promise.all(stockList.map(async (e) => {
         try {
             let stockData = await vietstock.getStockData(e)
-            data.push(stockData)
             saveStockPattern(stockData)
+            delete stockData.daily
+            data.push(stockData)
         } catch (err) {
             console.log(err)
         }
@@ -152,14 +139,14 @@ async function getAndSaveStockDataParallel(stockList) {
     return data
 }
 
-async function getAndSaveStockDataSequence(stockList) {
-    console.log(stockList)
+async function getAndSaveStockDataSequence(filterName, stockList) {
     let data = []
     for (const stockName of stockList) {
         console.log(stockName)
         let stockData = await vietstock.getStockData(stockName)
+        if (filterName != 'MACD') saveStockPattern(stockData)
+        delete stockData.daily
         data.push(stockData)
-        saveStockPattern(stockData)
     }
     return data
 }
@@ -170,7 +157,7 @@ function generateMessageMACD(filterName, data) {
     let stockData = ''
     let url = 'https://pdkhanh.github.io/stock-3k-fe/?date=' + today
     data.forEach(element => {
-        stockData += `${element.code} ${addDotToCurrency(element.price)} (${element.change} ${element.perChange}%) ${addLetterToCurrency(element.mTotalVal)}\n`
+        stockData += `${element.code} ${addDotToCurrency(element.price)} (${addDotToCurrency(element.change)} ${element.perChange}%) ${addLetterToCurrency(element.mTotalVal)}\n`
     });
     let message = `${filterName} - ${today} found ${count} \n${stockData}${url}`
     return message
@@ -201,28 +188,3 @@ function addDotToCurrency(nStr) {
     }
     return x1 + x2;
 }
-
-// Find a single Tutorial with an id
-exports.findOne = (req, res) => {
-
-};
-
-// Update a Tutorial by the id in the request
-exports.update = (req, res) => {
-
-};
-
-// Delete a Tutorial with the specified id in the request
-exports.delete = (req, res) => {
-
-};
-
-// Delete all Tutorials from the database.
-exports.deleteAll = (req, res) => {
-
-};
-
-// Find all published Tutorials
-exports.findAllPublished = (req, res) => {
-
-};
