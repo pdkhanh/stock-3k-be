@@ -3,12 +3,7 @@ module.exports = mongoose => {
     {
       code: String,
       addedDate: String,
-      perChange: Number,
-      change: Number,
-      initPrice: Number,
-      currentPrice: Number,
-      currentChange: Number,
-      currentPerChange: Number
+      initPrice: Number
     },
     { timestamps: true },
   );

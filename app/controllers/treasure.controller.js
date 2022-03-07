@@ -10,7 +10,7 @@ exports.create = async (req, res) => {
         res.send(data)
         return
     }
-    treasure.save(treasure).then(data => {
+    treasure.save(treasure).then(() => {
         res.send(data)
     }).catch(err => {
         if (err.code == 11000) res.send({ message: err.keyValue.code + ' already existed' })
@@ -19,8 +19,8 @@ exports.create = async (req, res) => {
 };
 
 exports.getAll = async (req, res) => {
-    let data = await Treasure.find({})
-    for (const e of data) {
+    let data = JSON.parse(JSON.stringify(await Treasure.find({}).select(['-_id', '-createdAt', '-updatedAt'])))
+    for (let e of data) {
         await calculateStockData(e)
     }
     res.send(data)
@@ -47,31 +47,37 @@ exports.update = async (req, res) => {
 async function initTreasureData(initData) {
     try {
         let vietstockData = await vietstock.getStockData(initData.code)
+        initData.initPrice = initData.initPrice == 0 ? vietstockData.price : initData.initPrice
+        console.log(initData.initPrice)
+        let profit = vietstockData.price - initData.initPrice
+        let profitPercent = profit * 100 / initData.initPrice
         let data = {
             code: initData.code,
             addedDate: initData.addedDate,
             initPrice: initData.initPrice == 0 ? vietstockData.price : initData.initPrice,
-            change: 0,
-            perChange: 0,
-            currentPrice: vietstockData.price,
-            currentChange: vietstockData.change,
-            currentPerChange: vietstockData.perChange
+            profit: profit,
+            profitPercent: profit == 0 ? 0 : profitPercent.toFixed(2),
+            price: vietstockData.price,
+            change: vietstockData.change,
+            perChange: vietstockData.perChange
         }
         return data
     } catch (err) {
+        console.log(err)
         return { message: `${initData.code} not found` }
     }
 }
 
 async function calculateStockData(data) {
     let vietstockData = await vietstock.getStockData(data.code)
-    let change = vietstockData.price - data.initPrice
-    let perChange = change * 100 / data.initPrice
-    data.change = change
-    data.perChange = change == 0 ? 0 : perChange.toFixed(2)
+    console.log(data.code + ' ' + vietstockData.price)
+    let profit = vietstockData.price - data.initPrice
+    let profitPercent = profit * 100 / data.initPrice
+    data.profit = profit
+    data.profitPercent = profit == 0 ? 0 : parseFloat(profitPercent.toFixed(2))
     data.price = vietstockData.price
-    data.currentChange = vietstockData.change
-    data.currentPerChange = vietstockData.perChange
+    data.change = vietstockData.change
+    data.perChange = vietstockData.perChange
     console.log(data)
     return data
 }
