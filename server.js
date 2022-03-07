@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 
 var corsOptions = {
-  origin: ["http://localhost:8081", "http://127.0.0.1:5500", "https://pdkhanh.github.io", "https://stock-treasure-3k.herokuapp.com"]
+  origin: ["http://localhost:8081", "http://127.0.0.1:5500", "https://pdkhanh.github.io", "https://stock-treasure-3k.herokuapp.com", "https://stock-treasure-3k-production.up.railway.app"]
 };
 
 app.use(cors(corsOptions));
