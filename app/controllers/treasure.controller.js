@@ -59,11 +59,10 @@ exports.getAll = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-    let stockCode = req.body.code
-    Treasure.deleteOne({ code: stockCode }, function (err) {
+    Treasure.deleteOne(req.body, function (err) {
         if (err) res.send(err)
     });
-    res.send('Deleted ' + stockCode)
+    res.send({ status: 'Deleted ' + req.body.code })
 };
 
 exports.update = async (req, res) => {
@@ -73,7 +72,7 @@ exports.update = async (req, res) => {
         { initPrice: newPrice }, function (err) {
             if (err) res.send(err)
         });
-    res.send({status: 'OK'})
+    res.send({ status: 'OK' })
 };
 
 async function initTreasureData(initData) {
