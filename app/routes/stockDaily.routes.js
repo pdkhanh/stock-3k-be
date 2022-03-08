@@ -6,8 +6,6 @@ module.exports = app => {
   // Create a new Tutorial
   router.post("/", stockDaily.create);
 
-  router.get("/all", stockDaily.findStock);
-
   // Retrieve all Tutorials
   router.get("/", stockDaily.findAll);
 

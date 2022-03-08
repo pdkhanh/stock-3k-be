@@ -3,7 +3,8 @@ module.exports = mongoose => {
     {
       code: String,
       addedDate: String,
-      initPrice: Number
+      initPrice: Number,
+      filter: String
     },
     { timestamps: true },
   );

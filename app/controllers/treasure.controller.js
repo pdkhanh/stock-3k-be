@@ -3,6 +3,10 @@ const vietstock = require("../vietstock/vietstock.js")
 const Treasure = db.Treasure;
 
 exports.create = async (req, res) => {
+    Array.isArray(req.body) ? createMultiple(req, res) : createSingle(req, res)
+};
+
+async function createSingle(req, res) {
     let body = req.body
     let data = await initTreasureData(body)
     const treasure = new Treasure(data);
@@ -15,11 +19,39 @@ exports.create = async (req, res) => {
     }).catch(err => {
         if (err.code == 11000) res.send({ message: err.keyValue.code + ' already existed' })
     })
-    // 
+};
+
+let createMultiple = async (req, res) => {
+    let body = req.body
+    if (body.length == 0) {
+        res.send('OK')
+        return
+    }
+    let result = []
+    let filterName = body[0].filter
+    let existingData = await Treasure.find({ filter: filterName }, { code: 1 })
+    let existingStock = []
+    existingData.forEach(element => {
+        existingStock.push(element.code)
+    });
+
+    for (const stock of body) {
+        if (!existingStock.includes(stock.code)) {
+            let data = await initTreasureData(stock)
+            result.push(data)
+        }
+    }
+
+    Treasure.create(result).then(() => {
+        res.send(result)
+    })
 };
 
 exports.getAll = async (req, res) => {
-    let data = JSON.parse(JSON.stringify(await Treasure.find({}).select(['-_id', '-createdAt', '-updatedAt'])))
+    let filterName = req.query.filter
+    let query = { filter: filterName }
+    console.log(query)
+    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
     for (let e of data) {
         await calculateStockData(e)
     }
@@ -41,20 +73,20 @@ exports.update = async (req, res) => {
         { initPrice: newPrice }, function (err) {
             if (err) res.send(err)
         });
-    res.send('OK')
+    res.send({status: 'OK'})
 };
 
 async function initTreasureData(initData) {
     try {
         let vietstockData = await vietstock.getStockData(initData.code)
         initData.initPrice = initData.initPrice == 0 ? vietstockData.price : initData.initPrice
-        console.log(initData.initPrice)
         let profit = vietstockData.price - initData.initPrice
         let profitPercent = profit * 100 / initData.initPrice
         let data = {
             code: initData.code,
             addedDate: initData.addedDate,
             initPrice: initData.initPrice == 0 ? vietstockData.price : initData.initPrice,
+            filter: initData.filter,
             profit: profit,
             profitPercent: profit == 0 ? 0 : profitPercent.toFixed(2),
             price: vietstockData.price,
@@ -70,7 +102,6 @@ async function initTreasureData(initData) {
 
 async function calculateStockData(data) {
     let vietstockData = await vietstock.getStockData(data.code)
-    console.log(data.code + ' ' + vietstockData.price)
     let profit = vietstockData.price - data.initPrice
     let profitPercent = profit * 100 / data.initPrice
     data.profit = profit
@@ -78,6 +109,6 @@ async function calculateStockData(data) {
     data.price = vietstockData.price
     data.change = vietstockData.change
     data.perChange = vietstockData.perChange
-    console.log(data)
+    // console.log(data)
     return data
 }
