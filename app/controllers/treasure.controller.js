@@ -58,6 +58,28 @@ exports.getAll = async (req, res) => {
     res.send(data)
 };
 
+exports.getAllStockCode = async (req, res) => {
+    let filterName = req.query.filter
+    let query = { filter: filterName }
+    console.log(query)
+    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['code'])))
+    let stockList = []
+    data.forEach(e => stockList.push(e.code))
+    res.send(stockList)
+};
+
+exports.getStock = async (req, res) => {
+    let filterName = req.query.filter
+    let stockList = req.query.stockList
+    let query = { filter: filterName, code: {$in: stockList} }
+    console.log(query)
+    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
+    for (let e of data) {
+        await calculateStockData(e)
+    }
+    res.send(data)
+};
+
 exports.delete = async (req, res) => {
     Treasure.deleteOne(req.body, function (err) {
         if (err) res.send(err)

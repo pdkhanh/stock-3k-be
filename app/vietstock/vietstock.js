@@ -19,7 +19,7 @@ function getStockData(stockCode) {
     let body = `Code=${stockCode}&OrderBy=&OrderDirection=desc&PageIndex=1&PageSize=200&FromDate=${dayMinus28}&ToDate=${today}&ExportType=default&Cols=TKLGD%2CTGTGD%2CVHTT%2CTGG%2CDC%2CTGPTG%2CCN%2CTN%2CGYG%2CBQ%2CKLGDKL%2CGTGDKL&ExchangeID=1&__RequestVerificationToken=26vdjbEBBP-m_L6Jtwpf1k09RWCA4X61vQb6SvzXMfRsRjDdW1RuWWE9sxCsaDp72SCrU09lR2n2CCosd1_J53PGKcfy4ABjYAzKNdkBKUY1`
     return new Promise(function (resolve, reject) {
         URL = `https://finance.vietstock.vn/data/gettradingresult`;
-        console.log(URL)
+        console.log(URL + ' ' + stockCode)
         request({
             url: URL,
             method: "POST",
