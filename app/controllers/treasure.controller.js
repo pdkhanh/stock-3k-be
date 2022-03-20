@@ -1,6 +1,9 @@
 const db = require("../models");
 const vietstock = require("../vietstock/vietstock.js")
+const properties = require("../file-helper/propertiesReader.js")
 const Treasure = db.Treasure;
+const Profit = db.Profit;
+var dateFormat = require('dateformat');
 
 exports.create = async (req, res) => {
     Array.isArray(req.body) ? createMultiple(req, res) : createSingle(req, res)
@@ -60,9 +63,10 @@ exports.getAll = async (req, res) => {
 
 exports.getAllStockCode = async (req, res) => {
     let filterName = req.query.filter
+    let mode = req.query.mode == 'Treasure' ? Treasure : Profit
     let query = { filter: filterName }
     console.log(query)
-    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['code'])))
+    let data = JSON.parse(JSON.stringify(await mode.find(query).select(['code'])))
     let stockList = []
     data.forEach(e => stockList.push(e.code))
     res.send(stockList)
@@ -70,10 +74,11 @@ exports.getAllStockCode = async (req, res) => {
 
 exports.getStock = async (req, res) => {
     let filterName = req.query.filter
+    let mode = req.query.mode == 'Treasure' ? Treasure : Profit
     let stockList = req.query.stockList
-    let query = { filter: filterName, code: {$in: stockList} }
+    let query = { filter: filterName, code: { $in: stockList } }
     console.log(query)
-    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
+    let data = JSON.parse(JSON.stringify(await mode.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
     for (let e of data) {
         await calculateStockData(e)
     }
@@ -119,6 +124,30 @@ async function initTreasureData(initData) {
         console.log(err)
         return { message: `${initData.code} not found` }
     }
+}
+
+exports.takeProfit = async (req, res) => {
+    let query = { addedDate: getTakeProfitDate() }
+    console.log(query)
+    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
+    for (let e of data) {
+        await calculateStockData(e)
+    }
+    Profit.create(data)
+    Treasure.remove(query)
+    res.send({ message: 'OK' })
+}
+
+function getTakeProfitDate() {
+    let today = new Date();
+    let takeProfitDay = properties.getProperties('takeProfitDay')
+    let subtractDay = getSubtractDay(today)    
+    return dateFormat(today.setDate(today.getDate() - takeProfitDay - subtractDay), "mm/dd/yyyy");
+}
+
+function getSubtractDay(today) {
+    let includeWeekend = [1,2,3]
+    return includeWeekend.includes(today.getDay()) ? 2 : 0
 }
 
 async function calculateStockData(data) {

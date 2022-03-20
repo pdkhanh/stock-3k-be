@@ -9,5 +9,8 @@ module.exports = app => {
   router.delete("/", treasure.delete);
   router.patch("/", treasure.update);
 
+  router.post("/profit", treasure.takeProfit);
+
+
   app.use('/api/treasure', router);
 };
