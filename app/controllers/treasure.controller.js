@@ -127,26 +127,26 @@ async function initTreasureData(initData) {
 }
 
 exports.takeProfit = async (req, res) => {
-    let query = { addedDate: getTakeProfitDate() }
+    let query = { filter: { $ne: 'Self' }, addedDate: getTakeProfitDate() }
     console.log(query)
     let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
     for (let e of data) {
         await calculateStockData(e)
     }
-    Profit.create(data)
-    Treasure.remove(query)
+    await Profit.create(data)
+    await Treasure.deleteMany(query)
     res.send({ message: 'OK' })
 }
 
 function getTakeProfitDate() {
     let today = new Date();
     let takeProfitDay = properties.getProperties('takeProfitDay')
-    let subtractDay = getSubtractDay(today)    
+    let subtractDay = getSubtractDay(today)
     return dateFormat(today.setDate(today.getDate() - takeProfitDay - subtractDay), "mm/dd/yyyy");
 }
 
 function getSubtractDay(today) {
-    let includeWeekend = [1,2,3]
+    let includeWeekend = [1, 2, 3]
     return includeWeekend.includes(today.getDay()) ? 2 : 0
 }
 
