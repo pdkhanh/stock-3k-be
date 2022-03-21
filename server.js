@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+process.env.TZ = "Asia/Ho_Chi_Minh";
 const app = express();
 
 var corsOptions = {
