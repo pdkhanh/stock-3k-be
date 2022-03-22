@@ -79,8 +79,10 @@ exports.getStock = async (req, res) => {
     let query = { filter: filterName, code: { $in: stockList } }
     console.log(query)
     let data = JSON.parse(JSON.stringify(await mode.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
-    for (let e of data) {
-        await calculateStockData(e)
+    if(mode == 'Treasure') {
+        for (let e of data) {
+            await calculateStockData(e)
+        }
     }
     res.send(data)
 };
