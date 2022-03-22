@@ -79,7 +79,7 @@ exports.getStock = async (req, res) => {
     let query = { filter: filterName, code: { $in: stockList } }
     console.log(query)
     let data = JSON.parse(JSON.stringify(await mode.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
-    if(mode == 'Treasure') {
+    if(mode == Treasure) {
         for (let e of data) {
             await calculateStockData(e)
         }
@@ -137,7 +137,7 @@ exports.takeProfit = async (req, res) => {
     }
     await Profit.create(data)
     await Treasure.deleteMany(query)
-    res.send({ message: 'OK' })
+    res.send(data)
 }
 
 function getTakeProfitDate() {
