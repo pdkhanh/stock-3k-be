@@ -4,6 +4,7 @@ const properties = require("../file-helper/propertiesReader.js")
 const Treasure = db.Treasure;
 const Profit = db.Profit;
 var dateFormat = require('dateformat');
+const telegram = require("../telegram/telegram.js")
 
 exports.create = async (req, res) => {
     Array.isArray(req.body) ? createMultiple(req, res) : createSingle(req, res)
@@ -137,6 +138,7 @@ exports.takeProfit = async (req, res) => {
     }
     await Profit.create(data)
     await Treasure.deleteMany(query)
+    telegram.sendMessage(generateTakeProfitMessage(data))
     res.send(data)
 }
 
@@ -150,6 +152,33 @@ function getTakeProfitDate() {
 function getSubtractDay(today) {
     let includeWeekend = [1, 2, 3]
     return includeWeekend.includes(today.getDay()) ? 2 : 0
+}
+
+function generateTakeProfitMessage(data) {
+    let today = dateFormat(new Date(), "yyyy-mm-dd");
+    let count = data.length
+    let stockData = ''
+    let totalProfitPercent = 0
+    data.forEach(element => {
+        stockData += `\nT3 ${element.code} ${addDotToCurrency(element.price)} (${addDotToCurrency(element.change)} ${element.perChange}%) => ${element.profitPercent}%`
+        totalProfitPercent += element.profitPercent
+    });
+    totalProfitPercent = (totalProfitPercent/count).toFixed(2)
+    let message = `${today} Take Profit: ${totalProfitPercent}%${stockData}`
+
+    return count > 0 ? message : `${today} Not Taking Profit`
+}
+
+function addDotToCurrency(nStr) {
+    nStr += '';
+    x = nStr.split('.');
+    x1 = x[0];
+    x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + '.' + '$2');
+    }
+    return x1 + x2;
 }
 
 async function calculateStockData(data) {
