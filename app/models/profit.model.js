@@ -9,7 +9,8 @@ module.exports = mongoose => {
       perChange: Number,
       profit: Number,
       profitPercent: Number,
-      filter: String
+      filter: String,
+      T: Number
     },
     { timestamps: true },
   );

@@ -80,7 +80,7 @@ exports.getStock = async (req, res) => {
     let query = { filter: filterName, code: { $in: stockList } }
     console.log(query)
     let data = JSON.parse(JSON.stringify(await mode.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
-    if(mode == Treasure) {
+    if (mode == Treasure) {
         for (let e of data) {
             await calculateStockData(e)
         }
@@ -130,43 +130,46 @@ async function initTreasureData(initData) {
 }
 
 exports.takeProfit = async (req, res) => {
-    let query = { filter: { $ne: 'Self' }, addedDate: getTakeProfitDate() }
-    console.log(query)
-    let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
-    for (let e of data) {
-        await calculateStockData(e)
+    let takeProfitDates = getTakeProfitDate()
+    console.log(takeProfitDates)
+    let response = []
+    for (const date of takeProfitDates) {
+        let query = { filter: { $ne: 'Self' }, addedDate: date[1] }
+        console.log(query)
+        let data = JSON.parse(JSON.stringify(await Treasure.find(query).select(['-_id', '-createdAt', '-updatedAt'])))
+        for (let e of data) {
+            await calculateStockData(e)
+            e.T = date[0]
+        }
+        response.push([date[0], data])
+        await Profit.create(data)
+        await Treasure.deleteMany(query)
     }
-    await Profit.create(data)
-    await Treasure.deleteMany(query)
-    telegram.sendMessage(generateTakeProfitMessage(data))
-    res.send(data)
-}
-
-function getTakeProfitDate() {
-    let today = new Date();
-    let takeProfitDay = properties.getProperties('takeProfitDay')
-    let subtractDay = getSubtractDay(today)
-    return dateFormat(today.setDate(today.getDate() - takeProfitDay - subtractDay), "mm/dd/yyyy");
-}
-
-function getSubtractDay(today) {
-    let includeWeekend = [1, 2, 3]
-    return includeWeekend.includes(today.getDay()) ? 2 : 0
-}
+    let message = generateTakeProfitMessage(response)
+    telegram.sendMessage(message)
+    res.send({ message: message })
+};
 
 function generateTakeProfitMessage(data) {
     let today = dateFormat(new Date(), "yyyy-mm-dd");
-    let count = data.length
-    let stockData = ''
-    let totalProfitPercent = 0
-    data.forEach(element => {
-        stockData += `\nT3 ${element.code} ${addDotToCurrency(element.price)} (${addDotToCurrency(element.change)} ${element.perChange}%) => ${element.profitPercent}%`
-        totalProfitPercent += element.profitPercent
+    let message = today
+    data.forEach(e => {
+        message += `\nT${e[0]}`
+        let stockDetail = ''
+        let totalProfitPercent = 0
+        if (e[1].length == 0) {
+            stockDetail += `\nNo Taking Profit`
+        } else {
+            e[1].forEach(element => {
+                stockDetail += `\n${element.code} ${addDotToCurrency(element.price)} (${addDotToCurrency(element.change)} ${element.perChange}%) => ${element.profitPercent}%`
+                totalProfitPercent += element.profitPercent
+            })
+        }
+        totalProfitPercent = e[1].length == 0 ? ' 0.00%' : ` ${(totalProfitPercent / e[1].length).toFixed(2)}%`
+        message += totalProfitPercent
+        message += stockDetail
     });
-    totalProfitPercent = (totalProfitPercent/count).toFixed(2)
-    let message = `${today} Take Profit: ${totalProfitPercent}%${stockData}`
-
-    return count > 0 ? message : `${today} Not Taking Profit`
+    return message
 }
 
 function addDotToCurrency(nStr) {
@@ -190,6 +193,46 @@ async function calculateStockData(data) {
     data.price = vietstockData.price
     data.change = vietstockData.change
     data.perChange = vietstockData.perChange
-    // console.log(data)
     return data
+}
+
+const publicHolidays = ["2022-01-01", "2022-01-29", "2022-01-30", "2022-01-31", "2022-02-01", "2022-02-02", "2022-02-03", "2022-04-10", "2022-04-30", "2022-05-01", "2022-09-01", "2022-09-02"]
+
+function getTakeProfitDate() {
+    let output = []
+    let takeProfitDays = [3, 5, 7]
+    for (const takeProfitDay of takeProfitDays) {
+        output.push([takeProfitDay, calculateWeekDay(takeProfitDay)])
+    }
+    return output
+}
+
+function calculateWeekDay(day) {
+    let i = 1
+    let actualMinusDay = 0
+    while (i <= day) {
+        let counter = ++actualMinusDay
+        if (!isWeekend(minusDay(counter)) && !isPublicHoliday(minusDay(counter))) i++
+    }
+    return dateFormat(minusDay(actualMinusDay), "mm/dd/yyyy")
+}
+
+function isWeekend(date) {
+    return [0, 6].includes(date.getDay())
+}
+
+function isPublicHoliday(date) {
+    for (const holiday of publicHolidays) {
+        let holidate = new Date(dateFormat(holiday, "mm/dd/yyyy"))
+        if (holidate.getTime() == date.getTime()) {
+            return true
+        }
+    }
+    return false
+}
+
+function minusDay(day) {
+    let today = new Date()
+    today.setDate(today.getDate() - day)
+    return new Date(dateFormat(today, "mm/dd/yyyy"));
 }
