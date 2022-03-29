@@ -143,8 +143,9 @@ exports.takeProfit = async (req, res) => {
         }
         response.push([date[0], data])
         await Profit.create(data)
-        await Treasure.deleteMany(query)
     }
+    let query = { filter: { $ne: 'Self' }, addedDate: takeProfitDates[2][1] }
+    await Treasure.deleteMany(query)
     let message = generateTakeProfitMessage(response)
     telegram.sendMessage(message)
     res.send({ message: message })
