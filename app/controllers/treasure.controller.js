@@ -6,7 +6,7 @@ const Profit = db.Profit;
 var dateFormat = require('dateformat');
 const telegram = require("../telegram/telegram.js")
 
-exports.create = async (req, res) => {
+exports.create = async(req, res) => {
     Array.isArray(req.body) ? createMultiple(req, res) : createSingle(req, res)
 };
 
@@ -25,7 +25,7 @@ async function createSingle(req, res) {
     })
 };
 
-let createMultiple = async (req, res) => {
+let createMultiple = async(req, res) => {
     let body = req.body
     if (body.length == 0) {
         res.send('OK')
@@ -51,7 +51,7 @@ let createMultiple = async (req, res) => {
     })
 };
 
-exports.getAll = async (req, res) => {
+exports.getAll = async(req, res) => {
     let filterName = req.query.filter
     let query = { filter: filterName }
     console.log(query)
@@ -62,7 +62,7 @@ exports.getAll = async (req, res) => {
     res.send(data)
 };
 
-exports.getAllStockCode = async (req, res) => {
+exports.getAllStockCode = async(req, res) => {
     let filterName = req.query.filter
     let mode = req.query.mode == 'Treasure' ? Treasure : Profit
     let query = { filter: filterName }
@@ -73,7 +73,7 @@ exports.getAllStockCode = async (req, res) => {
     res.send(stockList)
 };
 
-exports.getStock = async (req, res) => {
+exports.getStock = async(req, res) => {
     let filterName = req.query.filter
     let mode = req.query.mode == 'Treasure' ? Treasure : Profit
     let stockList = req.query.stockList
@@ -88,20 +88,19 @@ exports.getStock = async (req, res) => {
     res.send(data)
 };
 
-exports.delete = async (req, res) => {
-    Treasure.deleteOne(req.body, function (err) {
+exports.delete = async(req, res) => {
+    Treasure.deleteOne(req.body, function(err) {
         if (err) res.send(err)
     });
     res.send({ status: 'Deleted ' + req.body.code })
 };
 
-exports.update = async (req, res) => {
+exports.update = async(req, res) => {
     let stockCode = req.body.code
     let newPrice = req.body.initPrice
-    Treasure.updateOne({ code: stockCode },
-        { initPrice: newPrice }, function (err) {
-            if (err) res.send(err)
-        });
+    Treasure.updateOne({ code: stockCode }, { initPrice: newPrice }, function(err) {
+        if (err) res.send(err)
+    });
     res.send({ status: 'OK' })
 };
 
@@ -129,7 +128,11 @@ async function initTreasureData(initData) {
     }
 }
 
-exports.takeProfit = async (req, res) => {
+exports.takeProfit = async(req, res) => {
+    if (isPublicHoliday(minusDay(0))) {
+        res.send({ message: `Today ${minusDay(0)} is not a working day` })
+        return;
+    }
     let takeProfitDates = getTakeProfitDate()
     console.log(takeProfitDates)
     let response = []
@@ -197,7 +200,7 @@ async function calculateStockData(data) {
     return data
 }
 
-const publicHolidays = ["2022-01-01", "2022-01-29", "2022-01-30", "2022-01-31", "2022-02-01", "2022-02-02", "2022-02-03", "2022-04-10", "2022-04-30", "2022-05-01", "2022-09-01", "2022-09-02"]
+const publicHolidays = ["2022-01-01", "2022-01-29", "2022-01-30", "2022-01-31", "2022-02-01", "2022-02-02", "2022-02-03", "2022-04-10", "2022-04-30", "2022-05-01", "2022-05-02", "2022-05-03", "2022-09-01", "2022-09-02"]
 
 function getTakeProfitDate() {
     let output = []
